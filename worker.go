@@ -138,6 +138,7 @@ func (w *CeleryWorker) RunTask(message *TaskMessage) (*ResultMessage, error) {
 	// convert to task interface
 	taskInterface, ok := task.(CeleryTask)
 	if ok {
+		message.Kwargs["task_id"] = message.ID
 		if err := taskInterface.ParseKwargs(message.Kwargs); err != nil {
 			return nil, err
 		}
