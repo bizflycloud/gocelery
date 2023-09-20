@@ -182,11 +182,10 @@ func (tm *TaskMessage) Encode() (string, error) {
 
 // ResultMessage is return message received from broker
 type ResultMessage struct {
-	ID        string        `json:"task_id"`
-	Status    string        `json:"status"`
-	Traceback interface{}   `json:"traceback"`
-	Result    interface{}   `json:"result"`
-	Children  []interface{} `json:"children"`
+	State    string      `json:"status"`
+	Action   string      `json:"action"`
+	Result   interface{} `json:"result"`
+	Progress int         `json:"progress"`
 }
 
 func (rm *ResultMessage) reset() {
@@ -196,9 +195,7 @@ func (rm *ResultMessage) reset() {
 var resultMessagePool = sync.Pool{
 	New: func() interface{} {
 		return &ResultMessage{
-			Status:    "SUCCESS",
-			Traceback: nil,
-			Children:  nil,
+			State: "PENDING",
 		}
 	},
 }
