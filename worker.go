@@ -146,7 +146,7 @@ func (w *CeleryWorker) RunTask(message *TaskMessage) (*ResultMessage, error) {
 		if err != nil {
 			return nil, err
 		}
-		return getResultMessage(val), err
+		return getResultMessage(val, err), err
 	}
 
 	// use reflection to execute function ptr

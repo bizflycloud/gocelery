@@ -200,9 +200,14 @@ var resultMessagePool = sync.Pool{
 	},
 }
 
-func getResultMessage(val interface{}) *ResultMessage {
+func getResultMessage(val interface{}, err error) *ResultMessage {
 	msg := resultMessagePool.Get().(*ResultMessage)
 	msg.Result = val
+	msg.Progress = 100
+	msg.State = "SUCCESS"
+	if err != nil {
+		msg.State = "FAILURE"
+	}
 	return msg
 }
 
