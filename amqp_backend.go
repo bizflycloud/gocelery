@@ -6,10 +6,9 @@ package gocelery
 
 import (
 	"encoding/json"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"strings"
 	"time"
-
-	"github.com/streadway/amqp"
 )
 
 // AMQPCeleryBackend CeleryBackend for AMQP

@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/streadway/amqp"
 )
 
 // AMQPExchange stores AMQP Exchange configuration
@@ -46,7 +44,7 @@ func NewAMQPQueue(name string) *AMQPQueue {
 	}
 }
 
-//AMQPCeleryBroker is RedisBroker for AMQP
+// AMQPCeleryBroker is RedisBroker for AMQP
 type AMQPCeleryBroker struct {
 	*amqp.Channel
 	Connection       *amqp.Connection
