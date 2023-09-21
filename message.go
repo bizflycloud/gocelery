@@ -183,8 +183,8 @@ func (tm *TaskMessage) Encode() (string, error) {
 // ResultMessage is return message received from broker
 type ResultMessage struct {
 	State    string      `json:"status"`
-	Action   string      `json:"action"`
-	Result   interface{} `json:"result"`
+	Action   string      `json:"action,omitempty"`
+	Result   interface{} `json:"result,omitempty"`
 	Progress int         `json:"progress"`
 }
 
