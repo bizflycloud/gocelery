@@ -147,7 +147,7 @@ func (ar *AsyncResult) AsyncGet() (interface{}, error) {
 	if val == nil {
 		return nil, err
 	}
-	if val.Status != "SUCCESS" {
+	if val.State != "SUCCESS" {
 		return nil, fmt.Errorf("error response status %v", val)
 	}
 	ar.result = val
