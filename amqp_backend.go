@@ -6,10 +6,9 @@ package gocelery
 
 import (
 	"encoding/json"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"strings"
 	"time"
-
-	"github.com/streadway/amqp"
 )
 
 // AMQPCeleryBackend CeleryBackend for AMQP
@@ -93,10 +92,7 @@ func (b *AMQPCeleryBackend) GetResult(taskID string) (*ResultMessage, error) {
 
 // SetResult sets result back to AMQP queue
 func (b *AMQPCeleryBackend) SetResult(taskID string, result *ResultMessage) error {
-
-	result.ID = taskID
-
-	//queueName := taskID
+	// queueName := taskID
 	queueName := strings.Replace(taskID, "-", "", -1)
 
 	// autodelete is automatically set to true by python

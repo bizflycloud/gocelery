@@ -65,11 +65,11 @@ func (w *CeleryWorker) StartWorkerWithContext(ctx context.Context) {
 					defer releaseResultMessage(resultMsg)
 
 					// push result to backend
-					err = w.backend.SetResult(taskMessage.ID, resultMsg)
-					if err != nil {
-						log.Printf("failed to push result: %+v", err)
-						continue
-					}
+					// err = w.backend.SetResult(taskMessage.ID, resultMsg)
+					// if err != nil {
+					// 	log.Printf("failed to push result: %+v", err)
+					// 	continue
+					// }
 				}
 			}
 		}(i)
@@ -138,7 +138,7 @@ func (w *CeleryWorker) RunTask(message *TaskMessage) (*ResultMessage, error) {
 	// convert to task interface
 	taskInterface, ok := task.(CeleryTask)
 	if ok {
-		message.Kwargs["task_id"] = message.ID
+		message.Kwargs["TaskID"] = message.ID
 		if err := taskInterface.ParseKwargs(message.Kwargs); err != nil {
 			return nil, err
 		}
@@ -146,7 +146,7 @@ func (w *CeleryWorker) RunTask(message *TaskMessage) (*ResultMessage, error) {
 		if err != nil {
 			return nil, err
 		}
-		return getResultMessage(val), err
+		return getResultMessage(val, err), err
 	}
 
 	// use reflection to execute function ptr
@@ -154,12 +154,55 @@ func (w *CeleryWorker) RunTask(message *TaskMessage) (*ResultMessage, error) {
 	return runTaskFunc(&taskFunc, message)
 }
 
+func setTaskMessageToContext(ctx context.Context, message *TaskMessage) context.Context {
+	return context.WithValue(ctx, "Message", message)
+}
+
+// GetTaskMessageFromContext get task message from context
+func GetTaskMessageFromContext(ctx context.Context) *TaskMessage {
+	taskCtx := ctx.Value("Message")
+	if taskCtx == nil {
+		return nil
+	}
+	taskMessage, ok := taskCtx.(*TaskMessage)
+	if !ok {
+		return nil
+	}
+	return taskMessage
+}
+
+func getFirstArgType(taskFunc *reflect.Value) string {
+	numArgs := taskFunc.Type().NumIn()
+	if numArgs == 0 {
+		return ""
+	}
+	firstArg := taskFunc.Type().In(0)
+	pkgName := firstArg.PkgPath()
+	typeName := firstArg.Name()
+	firstArgType := typeName
+	if pkgName != "" {
+		firstArgType = fmt.Sprintf("%s.%s", pkgName, typeName)
+	}
+	return firstArgType
+}
+
 func runTaskFunc(taskFunc *reflect.Value, message *TaskMessage) (*ResultMessage, error) {
 
 	// check number of arguments
 	numArgs := taskFunc.Type().NumIn()
 	messageNumArgs := len(message.Args)
-	if numArgs != messageNumArgs {
+
+	args := make([]reflect.Value, 0)
+	if numArgs > 0 && numArgs == (messageNumArgs+1) {
+		// handle task function use context argument
+		firstArgType := getFirstArgType(taskFunc)
+		if firstArgType != "context.Context" {
+			return nil, fmt.Errorf("First argument must be context.Context type. Current first task argument is %s", firstArgType)
+		}
+		taskCtx := context.Background()
+		taskCtx = setTaskMessageToContext(taskCtx, message)
+		args = append(args, reflect.ValueOf(taskCtx))
+	} else if numArgs != messageNumArgs {
 		return nil, fmt.Errorf("Number of task arguments %d does not match number of message arguments %d", numArgs, messageNumArgs)
 	}
 
@@ -181,7 +224,8 @@ func runTaskFunc(taskFunc *reflect.Value, message *TaskMessage) (*ResultMessage,
 	}
 
 	// call method
-	res := taskFunc.Call(in)
+	args = append(args, in...)
+	res := taskFunc.Call(args)
 	if len(res) == 0 {
 		return nil, nil
 	}

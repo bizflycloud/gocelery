@@ -95,6 +95,10 @@ func (cc *CeleryClient) delay(task *TaskMessage) (*AsyncResult, error) {
 	}, nil
 }
 
+func (cc *CeleryClient) GetBackend() CeleryBackend {
+	return cc.backend
+}
+
 // CeleryTask is an interface that represents actual task
 // Passing CeleryTask interface instead of function pointer
 // avoids reflection and may have performance gain.
@@ -147,7 +151,7 @@ func (ar *AsyncResult) AsyncGet() (interface{}, error) {
 	if val == nil {
 		return nil, err
 	}
-	if val.Status != "SUCCESS" {
+	if val.State != "SUCCESS" {
 		return nil, fmt.Errorf("error response status %v", val)
 	}
 	ar.result = val
